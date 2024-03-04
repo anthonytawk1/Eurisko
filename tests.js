@@ -1,5 +1,4 @@
 const { mongoConnect } = require('./util/databases');  // Update the path accordingly
-const mongodb = require('mongodb');
 const Category = require('./models/category');  // Update the path accordingly
 const Album = require('./models/album');  // Update the path accordingly
 const Song = require('./models/song');  // Update the path accordingly

@@ -1,32 +1,44 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const mongoConnect = require('./util/databases').mongoConnect;
-
+const express = require("express");
 const app = express();
+const bodyParser = require("body-parser");
+const database = require("./src/lib/database");
+const config = require("./src/configs/config");
+const CategoryController = require("./src/categories/category.controller");
+const AlbumController = require("./src/albums/album.controller");
+const errorHandlerMiddleware = require("./src/middleware/error.middleware");
+const TrackController = require("./src/tracks/track.controller");
+const UserController = require("./src/users/user.controller");
+app.use(bodyParser.json());
 
-const categoryRoutes = require('./routes/categoryRoutes');
-const albumRoutes = require('./routes/albumRoutes');
-const songRoutes = require('./routes/songRoutes');
-app.use(express.json());
-// app.use(bodyParser.urlencoded({ extended: false }));
+async function startServer() {
+  try {
+    await database.connectToTheDatabase();
 
+    await initializeControllers([
+      new CategoryController(),
+      new AlbumController(),
+      new TrackController(),
+      new UserController(),
+    ]);
 
-app.use((req, res, next) => {
-    // console.log(req.body);
-    // User.findById(1)
-    //   .then(user => {
-    //     req.user = user;
-    //     next();
-    //   })
-    //   .catch(err => console.log(err));
-    next();
-  });
+    await initializeErrorHandlerMiddlware();
 
-  app.use(categoryRoutes);
-  app.use(albumRoutes);
-  app.use(songRoutes);
+    app.listen(config.server.port, () => {
+      console.log(`Server is running on port ${config.server.port}`);
+    });
+  } catch (error) {
+    console.error("Error starting server:", error);
+  }
+}
 
+async function initializeControllers(controllers) {
+  for (const controller of controllers) {
+    app.use("/", controller.router);
+  }
+}
 
-  mongoConnect(() => {
-    app.listen(3000);
-  });
+async function initializeErrorHandlerMiddlware() {
+  app.use(errorHandlerMiddleware);
+}
+
+startServer();
